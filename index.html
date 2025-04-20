@@ -103,7 +103,13 @@
 
     <div class="tab-buttons" id="tabButtons"></div>
     <div id="tabContents"></div>
+
+    <button onclick="exportPDF()" style="margin-top: 20px;">Export Current Tab to PDF</button>
   </main>
+
+  <!-- JS Libraries for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
     function setupTabs() {
@@ -212,13 +218,94 @@
       fieldset.querySelector(".total").textContent = total.toFixed(2);
       fieldset.querySelector(".grade").textContent = grade;
 
-      // apply colors
       const gradeSpan = fieldset.querySelector(".grade");
       const totalSpan = fieldset.querySelector(".total");
       gradeSpan.className = `grade ${gradeClass}`;
       totalSpan.style.backgroundColor = gradeSpan.style.color;
       totalSpan.style.color = 'black';
     }
+
+    async function exportPDF() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) {
+      alert("No tab is active!");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const margin = 10;
+    let y = margin;
+
+    // Title
+    const title = activeTab.querySelector('h3')?.textContent || "Grade Report";
+    pdf.setFontSize(18);
+    pdf.setTextColor(33, 33, 33);
+    pdf.text(title, margin, y);
+    y += 10;
+
+    // Table header
+    const headers = ["Roll", "PT1", "PT2", "Term", "MA", "PF", "SE", "PT(5)", "Term(80)", "Total", "Grade"];
+    const colWidths = [12, 12, 12, 12, 10, 10, 10, 15, 20, 15, 15];
+
+    pdf.setFontSize(10);
+    pdf.setFillColor(200, 220, 255); // Light blue background
+    pdf.setDrawColor(180); // Light border
+    pdf.setTextColor(000); // Black text
+    pdf.setFont(undefined, 'bold'); // Bold text
+
+    let x = margin;
+
+    headers.forEach((h, i) => {
+      pdf.rect(x, y, colWidths[i], 8, 'D');
+      pdf.text(h, x + 1, y + 5);
+      x += colWidths[i];
+    });
+
+    y += 8;
+
+    const fieldsets = activeTab.querySelectorAll("fieldset");
+
+    fieldsets.forEach((fieldset, index) => {
+      const pt1 = fieldset.querySelector(".pt1").value || "0";
+      const pt2 = fieldset.querySelector(".pt2").value || "0";
+      const term = fieldset.querySelector(".term").value || "0";
+      const ma = fieldset.querySelector(".ma").value || "0";
+      const pf = fieldset.querySelector(".pf").value || "0";
+      const se = fieldset.querySelector(".se").value || "0";
+      const pt5 = fieldset.querySelector(".pt5").textContent || "---";
+      const term80 = fieldset.querySelector(".term80").textContent || "---";
+      const total = fieldset.querySelector(".total").textContent || "---";
+      const grade = fieldset.querySelector(".grade").textContent || "---";
+
+      const row = [
+        `${index + 1}`, pt1, pt2, term, ma, pf, se, pt5, term80, total, grade
+      ];
+
+      x = margin;
+
+      if (index % 2 === 0) {
+        pdf.setFillColor(240); // Light gray for even rows
+        pdf.rect(x, y, colWidths.reduce((a, b) => a + b), 8, 'F');
+      }
+
+      pdf.setTextColor(0);
+      row.forEach((cell, i) => {
+        pdf.text(String(cell), x + 1, y + 5);
+        x += colWidths[i];
+      });
+
+      y += 8;
+
+      // Page break
+      if (y > 280) {
+        pdf.addPage();
+        y = margin;
+      }
+    });
+
+    pdf.save("grade-report.pdf");
+  }
   </script>
 </body>
 </html>
