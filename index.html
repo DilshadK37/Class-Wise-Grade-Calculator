@@ -1,11 +1,9 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AET Class Wise Grade Calculator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -22,7 +20,7 @@
     main {
       padding: 20px;
     }
-    input, button {
+    input, button, select {
       padding: 8px;
       margin: 10px 0;
       width: 100%;
@@ -61,19 +59,24 @@
     .result {
       font-weight: bold;
       margin-top: 10px;
-      color: green;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #e0f7fa;
+    }
+    .grade-Aplus { color: #4a5e21; font-weight: bold; }
+    .grade-A { color: #212d5e; font-weight: bold; }
+    .grade-B { color: #ff004d; font-weight: bold; }
+    .grade-C { color: #ff8800; font-weight: bold; }
+    .grade-D { color: #ff1d00; font-weight: bold; }
+    .total-box {
+      display: inline-block;
+      padding: 3px 8px;
+      margin-left: 5px;
+      border-radius: 5px;
+      background-color: #c4f261;
     }
     .error {
       color: red;
-    }
-    .actions {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .actions button {
-      flex: 1;
     }
     @media (max-width: 600px) {
       .tab-buttons button {
@@ -90,9 +93,11 @@
   <main>
     <div id="setup">
       <label for="subjects">Enter classes you teach (comma separated):</label>
-      <input type="text" id="subjects" placeholder="e.g., 4A, 5B" />
+      <input type="text" id="subjects" placeholder="e.g., 4a, 3b" />
+
       <label for="strengths">Enter class strength for each class (comma separated):</label>
       <input type="text" id="strengths" placeholder="e.g., 30, 25" />
+
       <button onclick="setupTabs()">Create Class Tabs</button>
     </div>
 
@@ -123,7 +128,7 @@
 
         const content = document.createElement("div");
         content.classList.add("tab-content");
-        content.innerHTML = generateForm(subject, strengths[index], index);
+        content.innerHTML = generateForm(subject, strengths[index]);
         tabContents.appendChild(content);
       });
 
@@ -139,32 +144,30 @@
       });
     }
 
-    function generateForm(subject, strength, tabIndex) {
-      let html = `<h3>${subject}</h3>`;
-      html += '<div class="actions">';
-      html += `<button onclick="exportToCSV(${tabIndex})">Export to Excel</button>`;
-      html += `<button onclick="exportToPDF(${tabIndex})">Export to PDF</button>`;
-      html += `<button onclick="saveToLocal(${tabIndex})">Save</button>`;
-      html += `<button onclick="loadFromLocal(${tabIndex})">Load</button>`;
-      html += '</div><hr/>';
-
+    function generateForm(subject, strength) {
+      let table = `<h3>${subject}</h3>`;
       for (let i = 1; i <= strength; i++) {
-        html += `
-        <fieldset>
-          <legend>Roll No: ${i}</legend>
-          <label>PT1 (20): <input type="number" class="pt1"></label>
-          <label>PT2 (20): <input type="number" class="pt2"></label>
-          <label>Term (50): <input type="number" class="term"></label>
-          <label>MA (5): <input type="number" class="ma"></label>
-          <label>PF (5): <input type="number" class="pf"></label>
-          <label>SE (5): <input type="number" class="se"></label>
-          <button onclick="calculate(this)">Calculate</button>
-          <div class="result">PT(5): <span class="pt5">---</span> | Term(80): <span class="term80">---</span> | Total(100): <span class="total">---</span> | Grade: <span class="grade">---</span></div>
-          <div class="error"></div>
-        </fieldset>
-      `;
+        table += `
+          <fieldset>
+            <legend>Roll No: ${i}</legend>
+            <label>PT1 (20): <input type="number" class="pt1"></label>
+            <label>PT2 (20): <input type="number" class="pt2"></label>
+            <label>Term (50): <input type="number" class="term"></label>
+            <label>MA (5): <input type="number" class="ma"></label>
+            <label>PF (5): <input type="number" class="pf"></label>
+            <label>SE (5): <input type="number" class="se"></label>
+            <button type="button" onclick="calculate(this)">Calculate</button>
+            <div class="result">
+              PT(5): <span class="pt5">---</span> | 
+              Term(80): <span class="term80">---</span> | 
+              Total(100): <span class="total total-box">---</span> | 
+              Grade: <span class="grade">---</span>
+            </div>
+            <div class="error"></div>
+          </fieldset>
+        `;
       }
-      return html;
+      return table;
     }
 
     function calculate(btn) {
@@ -193,95 +196,23 @@
         errorDiv.textContent = "";
       }
 
-      let grade = "D";
-      if (total >= 90) grade = "A+";
-      else if (total >= 75) grade = "A";
-      else if (total >= 56) grade = "B";
-      else if (total >= 35) grade = "C";
+      let grade = "D", gradeClass = "grade-D";
+      if (total >= 90) { grade = "A+"; gradeClass = "grade-Aplus"; }
+      else if (total >= 75) { grade = "A"; gradeClass = "grade-A"; }
+      else if (total >= 56) { grade = "B"; gradeClass = "grade-B"; }
+      else if (total >= 35) { grade = "C"; gradeClass = "grade-C"; }
 
       fieldset.querySelector(".pt5").textContent = pt5.toFixed(2);
       fieldset.querySelector(".term80").textContent = term80.toFixed(2);
       fieldset.querySelector(".total").textContent = total.toFixed(2);
       fieldset.querySelector(".grade").textContent = grade;
-    }
 
-    function exportToCSV(tabIndex) {
-      const tab = document.querySelectorAll(".tab-content")[tabIndex];
-      const rows = [["Roll", "PT1", "PT2", "Term", "MA", "PF", "SE", "PT(5)", "Term(80)", "Total", "Grade"]];
-      tab.querySelectorAll("fieldset").forEach((fs, i) => {
-        const getVal = cls => fs.querySelector(cls)?.value || "";
-        const getText = cls => fs.querySelector(cls)?.textContent || "";
-        rows.push([
-          i + 1,
-          getVal(".pt1"), getVal(".pt2"), getVal(".term"),
-          getVal(".ma"), getVal(".pf"), getVal(".se"),
-          getText(".pt5"), getText(".term80"),
-          getText(".total"), getText(".grade")
-        ]);
-      });
-      const csv = rows.map(r => r.join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "grades.csv";
-      link.click();
-    }
-
-    function exportToPDF(tabIndex) {
-      const tab = document.querySelectorAll(".tab-content")[tabIndex];
-      const doc = new jspdf.jsPDF();
-      const rows = [];
-      tab.querySelectorAll("fieldset").forEach((fs, i) => {
-        const getVal = cls => fs.querySelector(cls)?.value || "";
-        const getText = cls => fs.querySelector(cls)?.textContent || "";
-        rows.push([
-          i + 1,
-          getVal(".pt1"), getVal(".pt2"), getVal(".term"),
-          getVal(".ma"), getVal(".pf"), getVal(".se"),
-          getText(".pt5"), getText(".term80"),
-          getText(".total"), getText(".grade")
-        ]);
-      });
-      doc.text("Class Grades", 14, 10);
-      doc.autoTable({
-        head: [["Roll", "PT1", "PT2", "Term", "MA", "PF", "SE", "PT(5)", "Term(80)", "Total", "Grade"]],
-        body: rows
-      });
-      doc.save("grades.pdf");
-    }
-
-    function saveToLocal(tabIndex) {
-      const tab = document.querySelectorAll(".tab-content")[tabIndex];
-      const data = [];
-      tab.querySelectorAll("fieldset").forEach(fs => {
-        data.push({
-          pt1: fs.querySelector(".pt1").value,
-          pt2: fs.querySelector(".pt2").value,
-          term: fs.querySelector(".term").value,
-          ma: fs.querySelector(".ma").value,
-          pf: fs.querySelector(".pf").value,
-          se: fs.querySelector(".se").value
-        });
-      });
-      localStorage.setItem("class" + tabIndex, JSON.stringify(data));
-      alert("Saved!");
-    }
-
-    function loadFromLocal(tabIndex) {
-      const data = JSON.parse(localStorage.getItem("class" + tabIndex) || "[]");
-      const tab = document.querySelectorAll(".tab-content")[tabIndex];
-      if (!data.length) return alert("No saved data found.");
-      tab.querySelectorAll("fieldset").forEach((fs, i) => {
-        const row = data[i];
-        if (!row) return;
-        fs.querySelector(".pt1").value = row.pt1;
-        fs.querySelector(".pt2").value = row.pt2;
-        fs.querySelector(".term").value = row.term;
-        fs.querySelector(".ma").value = row.ma;
-        fs.querySelector(".pf").value = row.pf;
-        fs.querySelector(".se").value = row.se;
-      });
-      alert("Data loaded. Please press 'Calculate' for each.");
+      // apply colors
+      const gradeSpan = fieldset.querySelector(".grade");
+      const totalSpan = fieldset.querySelector(".total");
+      gradeSpan.className = `grade ${gradeClass}`;
+      totalSpan.style.backgroundColor = gradeSpan.style.color;
+      totalSpan.style.color = 'black';
     }
   </script>
 </body>
