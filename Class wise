@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AET Grade Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    header {
+      background-color: #3f51b5;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    main {
+      padding: 20px;
+    }
+    input, button, select {
+      padding: 8px;
+      margin: 10px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+    }
+    .tab-buttons {
+      display: flex;
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+    .tab-buttons button {
+      flex: 1;
+      padding: 10px;
+      background-color: #ddd;
+      border: none;
+      cursor: pointer;
+    }
+    .tab-buttons button.active {
+      background-color: #3f51b5;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .result {
+      font-weight: bold;
+      margin-top: 10px;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    @media (max-width: 600px) {
+      .tab-buttons button {
+        font-size: 14px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>AET Grade Calculator</h2>
+  </header>
+  <main>
+    <div id="setup">
+      <label for="subjects">Enter subjects you teach (comma separated):</label>
+      <input type="text" id="subjects" placeholder="e.g., Physics, Chemistry" />
+
+      <label for="strengths">Enter class strength for each subject (comma separated):</label>
+      <input type="text" id="strengths" placeholder="e.g., 30, 25" />
+
+      <button onclick="setupTabs()">Create Grade Tabs</button>
+    </div>
+
+    <div class="tab-buttons" id="tabButtons"></div>
+    <div id="tabContents"></div>
+  </main>
+
+  <script>
+    function setupTabs() {
+      const subjects = document.getElementById("subjects").value.split(',').map(s => s.trim());
+      const strengths = document.getElementById("strengths").value.split(',').map(n => parseInt(n.trim()));
+
+      if (subjects.length !== strengths.length || strengths.some(isNaN)) {
+        alert("Please enter valid subjects and corresponding strengths.");
+        return;
+      }
+
+      const tabButtons = document.getElementById("tabButtons");
+      const tabContents = document.getElementById("tabContents");
+      tabButtons.innerHTML = "";
+      tabContents.innerHTML = "";
+
+      subjects.forEach((subject, index) => {
+        const button = document.createElement("button");
+        button.textContent = subject;
+        button.onclick = () => activateTab(index);
+        tabButtons.appendChild(button);
+
+        const content = document.createElement("div");
+        content.classList.add("tab-content");
+        content.innerHTML = generateForm(subject, strengths[index]);
+        tabContents.appendChild(content);
+      });
+
+      activateTab(0);
+    }
+
+    function activateTab(index) {
+      document.querySelectorAll(".tab-buttons button").forEach((btn, i) => {
+        btn.classList.toggle("active", i === index);
+      });
+      document.querySelectorAll(".tab-content").forEach((tab, i) => {
+        tab.classList.toggle("active", i === index);
+      });
+    }
+
+    function generateForm(subject, strength) {
+      let table = `<h3>${subject}</h3>`;
+      for (let i = 1; i <= strength; i++) {
+        table += `
+          <fieldset>
+            <legend>Roll No: ${i}</legend>
+            <label>PT1 (20): <input type="number" class="pt1"></label>
+            <label>PT2 (20): <input type="number" class="pt2"></label>
+            <label>Term (50): <input type="number" class="term"></label>
+            <label>MA (5): <input type="number" class="ma"></label>
+            <label>PF (5): <input type="number" class="pf"></label>
+            <label>SE (5): <input type="number" class="se"></label>
+            <button onclick="calculate(this)">Calculate</button>
+            <div class="result">PT(5): <span class="pt5">---</span> | Term(80): <span class="term80">---</span> | Total(100): <span class="total">---</span> | Grade: <span class="grade">---</span></div>
+            <div class="error"></div>
+          </fieldset>
+        `;
+      }
+      return table;
+    }
+
+    function calculate(btn) {
+      const fieldset = btn.closest("fieldset");
+      const pt1 = parseFloat(fieldset.querySelector(".pt1").value);
+      const pt2 = parseFloat(fieldset.querySelector(".pt2").value);
+      const term = parseFloat(fieldset.querySelector(".term").value);
+      const ma = parseFloat(fieldset.querySelector(".ma").value);
+      const pf = parseFloat(fieldset.querySelector(".pf").value);
+      const se = parseFloat(fieldset.querySelector(".se").value);
+      const errorDiv = fieldset.querySelector(".error");
+
+      if ([pt1, pt2, term, ma, pf, se].some(isNaN)) {
+        errorDiv.textContent = "Please fill all fields with valid numbers.";
+        return;
+      }
+
+      const pt5 = ((pt1 + pt2) / 40) * 5;
+      const term80 = (term / 50) * 80;
+      const total = pt5 + term80 + ma + pf + se;
+
+      if (total > 100) {
+        errorDiv.textContent = "Invalid score! Total exceeds 100.";
+        return;
+      } else {
+        errorDiv.textContent = "";
+      }
+
+      let grade = "D";
+      if (total >= 90) grade = "A+";
+      else if (total >= 75) grade = "A";
+      else if (total >= 56) grade = "B";
+      else if (total >= 35) grade = "C";
+
+      fieldset.querySelector(".pt5").textContent = pt5.toFixed(2);
+      fieldset.querySelector(".term80").textContent = term80.toFixed(2);
+      fieldset.querySelector(".total").textContent = total.toFixed(2);
+      fieldset.querySelector(".grade").textContent = grade;
+    }
+  </script>
+</body>
+</html>
