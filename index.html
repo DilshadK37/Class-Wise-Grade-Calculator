@@ -185,6 +185,11 @@
         return;
       }
 
+      if (pt1 > 20 || pt2 > 20 || term > 50 || ma > 5 || pf > 5 || se > 5) {
+        errorDiv.textContent = "Please ensure all scores are within the valid limits.";
+        return;
+      }
+
       const pt5 = ((pt1 + pt2) / 40) * 5;
       const term80 = (term / 50) * 80;
       const total = pt5 + term80 + ma + pf + se;
